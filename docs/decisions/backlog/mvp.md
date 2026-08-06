@@ -108,7 +108,7 @@ the lines below when an issue specifically owns a section.
 | `docs/architecture/ai-gateway.md` | Out-of-MVP notice | this file (PR-time) |
 | `docs/architecture/agent-system.md` | Out-of-MVP notice | this file (PR-time) |
 | `docs/architecture/mcp-system.md` | Out-of-MVP notice | this file (PR-time) |
-| `docs/security/authentication.md` | Dev verifier + prod gate | 1.5, 4.4 |
+| `docs/security/authentication.md` | Dev verifier + prod gate | [M1.4](https://github.com/pullPluto/Keys/issues/10), [M4.7](https://github.com/pullPluto/Keys/issues/28) |
 | `docs/security/authorization.md` | Bounded-revocation note for the cache | 2.4 |
 | `docs/security/auditing.md` | Allowlist referenced; retention owned | 3.1, 4.2 |
 | `docs/security/encryption.md` | No new crypto in MVP | this file (PR-time) |
@@ -217,7 +217,7 @@ apps/worker/migrations/notes/0001_control_plane.recovery.md
     a router framework yet (sufficiency ladder).
   - Keep envelope dependency-free; validation can be a tiny hand-rolled
     schema until Phase 4 when something heavier is justified by an ADR.
-- **Dependencies:** 0.1 (migration runner) — non-blocking
+- **Dependencies:** M0.1 [#3](https://github.com/pullPluto/Keys/issues/3) (migration runner) — non-blocking
   but recommended first.
 
 <details>
@@ -288,7 +288,7 @@ export function isProduction(env: { ENVIRONMENT: string }): boolean {
 - **Technical Notes:** The D1 stub needs to support `prepare(query).bind(...).first()` /
   `.all()` / `.run()` at minimum; KV and R2 can be `Map`-backed. No
   dependency on `better-sqlite3` unless an ADR justifies it.
-- **Dependencies:** 0.2 (envelope).
+- **Dependencies:** M0.2 [#4](https://github.com/pullPluto/Keys/issues/4) (envelope).
 
 ## Phase 1 — Identity MVP (M1)
 
@@ -321,7 +321,7 @@ verified principal. The credential verifier is a dev-only stub
         that the MVP exercises the `Organization` aggregate end to end.
 - **Technical Notes:** Stay platform-agnostic. No Cloudflare types in
   the package.
-- **Dependencies:** 0.3 (ADR-009).
+- **Dependencies:** M0.3 [#5](https://github.com/pullPluto/Keys/issues/5) (ADR-009).
 
 <details>
 <summary>Boilerplate Code</summary>
@@ -366,7 +366,7 @@ export interface TenantService {
 - **Technical Notes:** D1 is SQLite; use `INSERT ... ON CONFLICT DO
   NOTHING` to make replays idempotent. Bind every value, never
   interpolate.
-- **Dependencies:** 1.1; 0.4 (env test harness).
+- **Dependencies:** M1.1 [#7](https://github.com/pullPluto/Keys/issues/7); M0.4 [#6](https://github.com/pullPluto/Keys/issues/6) (env test harness).
 
 ### [Backend] `POST /v1/tenants` and `POST /v1/identities` Worker routes
 
@@ -391,7 +391,7 @@ export interface TenantService {
 - **Technical Notes:** Validate the slug against a strict regex
   (`^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$`) and reject reserved slugs
   (`admin`, `system`, `syskey`, `keys`).
-- **Dependencies:** 1.1, 1.2.
+- **Dependencies:** M1.1 [#7](https://github.com/pullPluto/Keys/issues/7), M1.2 [#8](https://github.com/pullPluto/Keys/issues/8).
 
 ### [Security, adr-required] Dev-only credential verifier contract
 
@@ -418,7 +418,7 @@ export interface TenantService {
 - **Technical Notes:** Use `crypto.subtle` only — no Node-only
   crypto APIs in the Worker bundle. Tokens carry `iss`, `aud`,
   `sub`, `iat`, `exp`. Subject is the external `provider_subject`.
-- **Dependencies:** 1.3; 0.3 (ADR-009 must exist first so this ADR
+- **Dependencies:** M1.3 [#9](https://github.com/pullPluto/Keys/issues/9); M0.3 [#5](https://github.com/pullPluto/Keys/issues/5) (ADR-009 must exist first so this ADR
   can reference it).
 
 ## Phase 2 — Authorization MVP (M2)
@@ -465,7 +465,7 @@ export interface TenantService {
 - **Technical Notes:** D1 is single-writer per database; a simple
   `UPDATE ... WHERE status='active'` followed by `INSERT` is fine
   for the MVP volume. Document the volume assumption in the ADR.
-- **Dependencies:** 2.1.
+- **Dependencies:** M2.1 [#11](https://github.com/pullPluto/Keys/issues/11).
 
 ### [Backend] `POST /v1/policies` and `POST /v1/policies/:id/activate` routes
 
@@ -493,7 +493,7 @@ export interface TenantService {
   `policy.admin` must come from a hard-coded dev list read from
   `Env.MVP_BOOTSTRAP_ADMINS` (a JSON array). Document that this
   variable is removed in Phase 4.
-- **Dependencies:** 2.1, 2.2; 1.5 (verifier must exist for principal
+- **Dependencies:** M2.1 [#11](https://github.com/pullPluto/Keys/issues/11), M2.2 [#12](https://github.com/pullPluto/Keys/issues/12); M1.4 [#10](https://github.com/pullPluto/Keys/issues/10) (verifier must exist for principal
   check).
 
 ### [Backend] `POST /v1/authorize` and the default-deny rule
@@ -523,7 +523,7 @@ export interface TenantService {
 - **Technical Notes:** Add a TODO note that production must use a
   documented bounded-revocation design before KV can serve
   decisions.
-- **Dependencies:** 2.3.
+- **Dependencies:** M2.3 [#13](https://github.com/pullPluto/Keys/issues/13).
 
 ## Phase 3 — Audit & Hardening (M3)
 
@@ -578,7 +578,7 @@ export interface TenantService {
 - **Technical Notes:** Audit must be best-effort only when
   explicitly flagged (Phase 4 retention design will revisit this
   if needed). For MVP, fail-closed is correct.
-- **Dependencies:** 3.1.
+- **Dependencies:** M3.1 [#15](https://github.com/pullPluto/Keys/issues/15).
 
 ### [Testing] Test harness builder for authenticated request sequences
 
@@ -597,11 +597,11 @@ export interface TenantService {
         responses and a single `correlationId` shared across them.
   - [ ] The helper refuses to issue a request when
         `env.ENVIRONMENT === "production"`.
-- **Technical Notes:** Depends on 1.5; uses `DevHmacVerifier` to
+- **Technical Notes:** Depends on M1.4 [#10](https://github.com/pullPluto/Keys/issues/10); uses `DevHmacVerifier` to
   sign each request, so the helper can be used to exercise 1.3,
   2.3, 2.4, 3.2, and 3.3b–3.3d without re-implementing the
   signing path.
-- **Dependencies:** 0.4 (env harness), 1.5 (dev verifier).
+- **Dependencies:** M0.4 [#6](https://github.com/pullPluto/Keys/issues/6) (env harness), M1.4 [#10](https://github.com/pullPluto/Keys/issues/10) (dev verifier).
 
 ### [Testing] Per-route happy-path coverage (tenants, identities, policies, authorize)
 
@@ -619,7 +619,7 @@ export interface TenantService {
   - [ ] Each test exercises exactly one route's happy path and one
         documented failure case (400/403/409).
   - [ ] Tests run in under 500 ms each on a developer laptop.
-- **Dependencies:** 3.3 (the harness).
+- **Dependencies:** M3.3 [#17](https://github.com/pullPluto/Keys/issues/17) (the harness).
 
 ### [Testing] Cross-route authorization decision assertions
 
@@ -636,7 +636,7 @@ export interface TenantService {
   - [ ] The test runs in under 1 s on a developer laptop.
   - [ ] The test does not assert on audit row counts; that lives
         in 3.3d.
-- **Dependencies:** 3.3, 3.3a.
+- **Dependencies:** M3.3 [#17](https://github.com/pullPluto/Keys/issues/17), M3.4 [#18](https://github.com/pullPluto/Keys/issues/18).
 
 ### [Testing] Audit log shape and count assertions
 
@@ -652,7 +652,7 @@ export interface TenantService {
   - [ ] `tests/audit-end-to-end.test.ts` exists.
   - [ ] Asserts one `audit_event` per request and that audit
         failure produces a 500.
-- **Dependencies:** 3.1, 3.2, 3.3a, 3.3b.
+- **Dependencies:** M3.1 [#15](https://github.com/pullPluto/Keys/issues/15), M3.2 [#16](https://github.com/pullPluto/Keys/issues/16), M3.4 [#18](https://github.com/pullPluto/Keys/issues/18), M3.5 [#19](https://github.com/pullPluto/Keys/issues/19).
 
 ### [Security] Health endpoint leakage review
 
@@ -716,7 +716,7 @@ the ADR does not close the gate.
         data class lives in D1, KV, and R2.
   - [ ] `docs/operations/backups.md` is updated to point at the
         ADR.
-- **Dependencies:** 3.1 (the allowlist must be defined before the
+- **Dependencies:** M3.1 [#15](https://github.com/pullPluto/Keys/issues/15) (the allowlist must be defined before the
   retention numbers can be approved).
 
 ### [Docs] Assets inventory for the threat model
@@ -735,7 +735,7 @@ the ADR does not close the gate.
         tracked as separate Phase 4 issues.
   - [ ] `docs/security/threat-detection.md` cross-links the new
         file.
-- **Dependencies:** 4.1 (the backup break-glass admin should be
+- **Dependencies:** M4.1 [#22](https://github.com/pullPluto/Keys/issues/22) (the backup break-glass admin should be
   an asset owner before the inventory is complete).
 
 ### [Docs] Adversary and attack surface list
@@ -755,7 +755,7 @@ the ADR does not close the gate.
   - [ ] Every threat has a stable `T-####` ID.
   - [ ] `docs/security/threat-detection.md` cross-links the new
         file.
-- **Dependencies:** 4.3a.
+- **Dependencies:** M4.3 [#24](https://github.com/pullPluto/Keys/issues/24).
 
 ### [Docs] Mitigation mapping for each threat
 
@@ -770,7 +770,7 @@ the ADR does not close the gate.
         section with one row per `T-####`.
   - [ ] Gaps are recorded as new Phase 4+ issues, not silently
         accepted.
-- **Dependencies:** 4.3a, 4.3b.
+- **Dependencies:** M4.3 [#24](https://github.com/pullPluto/Keys/issues/24), M4.4 [#25](https://github.com/pullPluto/Keys/issues/25).
 
 ### [Docs] Incident response runbook
 
@@ -788,7 +788,7 @@ the ADR does not close the gate.
         runbook as the action path for any threat that fires.
   - [ ] A dated recovery exercise is recorded in
         `docs/operations/backups.md`.
-- **Dependencies:** 4.3a.
+- **Dependencies:** M4.3 [#24](https://github.com/pullPluto/Keys/issues/24).
 
 ### [Backend] Reject `dev`/`staging` verifiers when `ENVIRONMENT=production`
 
@@ -807,7 +807,7 @@ the ADR does not close the gate.
         chosen issuer and the rotation procedure.
   - [ ] `docs/security/authentication.md` updated to mark the dev
         verifier as retired.
-- **Dependencies:** 1.5 (the dev verifier must exist before being
+- **Dependencies:** M1.4 [#10](https://github.com/pullPluto/Keys/issues/10) (the dev verifier must exist before being
   replaced).
 
 ### [Docs] Update README "Status and delivery gates" section
@@ -835,28 +835,55 @@ the ADR does not close the gate.
 
 ## Suggested sequencing
 
-1. M0: 0.3, 0.1, 0.2, 0.4 (ADR, migration runner, envelope,
+1. M0: M0.3, M0.1, M0.2, M0.4 (ADR, migration runner, envelope,
    test harness).
-2. M1: 1.1, 1.2, 1.3, 1.4, 1.5 (identity contract, D1 repos,
+2. M1: M1.1, M1.2, M1.3, M1.4 (identity contract, D1 repos,
    routes, ADR-010, verifier).
-3. M2: 2.1, 2.2, 2.3, 2.4 (authz contract, D1 policy, routes,
+3. M2: M2.1, M2.2, M2.3, M2.4 (authz contract, D1 policy, routes,
    authorize route).
-4. M3: 3.1, 3.2, 3.3, 3.3a, 3.3b, 3.3c, 3.3d, 3.4 (audit sink,
+4. M3: M3.1, M3.2, M3.3, M3.4, M3.5, M3.6, M3.7 (audit sink,
    wire audit, harness, route tests, cross-route test, audit
    test, leakage review).
-5. M4: 4.1, 4.2, 4.3a, 4.3b, 4.3c, 4.3d, 4.4, 4.5 (backup
+5. M4: M4.1, M4.2, M4.3, M4.4, M4.5, M4.6, M4.7, M4.8 (backup
    break-glass admin, retention, threat model, prod verifier,
    README update).
 
 Each phase is a release boundary. Don't promote a phase to "done"
 without its exit criteria passing in CI.
 
-## Issue index
+## Issue index (with GitHub issue numbers)
 
-- M0: 0.1, 0.2, 0.3, 0.4
-- M1: 1.1, 1.2, 1.3, 1.4, 1.5
-- M2: 2.1, 2.2, 2.3, 2.4
-- M3: 3.1, 3.2, 3.3, 3.3a, 3.3b, 3.3c, 3.3d, 3.4
-- M4: 4.1, 4.2, 4.3a, 4.3b, 4.3c, 4.3d, 4.4, 4.5
+Each `[Mx.y]` issue below is also filed as a GitHub issue on
+`pullPluto/Keys`. Use the number to link from PRs and discussions.
+
+| ID | GitHub | Title |
+| --- | --- | --- |
+| M0.1 | [#3](https://github.com/pullPluto/Keys/issues/3) | Wire D1 migration runner and seed bootstrap |
+| M0.2 | [#4](https://github.com/pullPluto/Keys/issues/4) | Add request envelope and shared error response shape |
+| M0.3 | [#5](https://github.com/pullPluto/Keys/issues/5) | Record the MVP definition in a decision record |
+| M0.4 | [#6](https://github.com/pullPluto/Keys/issues/6) | Add Worker route harness and CI-equivalent check script |
+| M1.1 | [#7](https://github.com/pullPluto/Keys/issues/7) | Add tenant use-cases in `packages/identity` |
+| M1.2 | [#8](https://github.com/pullPluto/Keys/issues/8) | D1 repository implementation for identity package |
+| M1.3 | [#9](https://github.com/pullPluto/Keys/issues/9) | `POST /v1/tenants` and `POST /v1/identities` Worker routes |
+| M1.4 | [#10](https://github.com/pullPluto/Keys/issues/10) | Dev-only credential verifier contract |
+| M2.1 | [#11](https://github.com/pullPluto/Keys/issues/11) | `AuthorizationRequest` / `AuthorizationDecision` wiring through packages |
+| M2.2 | [#12](https://github.com/pullPluto/Keys/issues/12) | D1 policy store + activator |
+| M2.3 | [#13](https://github.com/pullPluto/Keys/issues/13) | `POST /v1/policies` and `POST /v1/policies/:id/activate` routes |
+| M2.4 | [#14](https://github.com/pullPluto/Keys/issues/14) | `POST /v1/authorize` and the default-deny rule |
+| M3.1 | [#15](https://github.com/pullPluto/Keys/issues/15) | `AuditSink` contract and D1 implementation |
+| M3.2 | [#16](https://github.com/pullPluto/Keys/issues/16) | Wire audit emit into all MVP routes |
+| M3.3 | [#17](https://github.com/pullPluto/Keys/issues/17) | Test harness builder for authenticated request sequences |
+| M3.4 | [#18](https://github.com/pullPluto/Keys/issues/18) | Per-route happy-path coverage (tenants, identities, policies, authorize) |
+| M3.5 | [#19](https://github.com/pullPluto/Keys/issues/19) | Cross-route authorization decision assertions |
+| M3.6 | [#20](https://github.com/pullPluto/Keys/issues/20) | Audit log shape and count assertions |
+| M3.7 | [#21](https://github.com/pullPluto/Keys/issues/21) | Health endpoint leakage review |
+| M4.1 | [#22](https://github.com/pullPluto/Keys/issues/22) | Name a backup break-glass administrator |
+| M4.2 | [#23](https://github.com/pullPluto/Keys/issues/23) | Approve retention periods and data classification |
+| M4.3 | [#24](https://github.com/pullPluto/Keys/issues/24) | Assets inventory for the threat model |
+| M4.4 | [#25](https://github.com/pullPluto/Keys/issues/25) | Adversary and attack surface list |
+| M4.5 | [#26](https://github.com/pullPluto/Keys/issues/26) | Mitigation mapping for each threat |
+| M4.6 | [#27](https://github.com/pullPluto/Keys/issues/27) | Incident response runbook |
+| M4.7 | [#28](https://github.com/pullPluto/Keys/issues/28) | Reject `dev`/`staging` verifiers when `ENVIRONMENT=production` |
+| M4.8 | [#29](https://github.com/pullPluto/Keys/issues/29) | Update README "Status and delivery gates" section |
 
 Total: 27 issues. Largest is 5 story points; median is 3.
