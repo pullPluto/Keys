@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "npm run dev --workspace=@pullpluto/keys-worker",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test tests/*.test.ts"
+    "test": "node --import tsx --test tests/*.test.ts",
+    "check:migrations": "node --import tsx --test tests/migration-shape.test.ts"
   },
   "devDependencies": {
     "tsx": "4.19.3",
