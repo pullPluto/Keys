@@ -100,17 +100,17 @@ the lines below when an issue specifically owns a section.
 | `README.md` | New "MVP definition" section; documentation index; gate list | this file (PR-time) |
 | `docs/architecture/overview.md` | Purpose + Non-goals reference this backlog | this file (PR-time) |
 | `docs/architecture/data-flow.md` | Steps 2–4, 6 made real; health-leakage test | 3.4 |
-| `docs/architecture/identity-model.md` | Tenant + identity data model exercised; per-app identity mapping ADR cross-link | 1.1, 1.2, 4.9 |
+| `docs/architecture/identity-model.md` | Tenant + identity data model exercised; per-app identity mapping ADR cross-link; `chosen_name` HR-source note | 1.1, 1.2, 4.9, 4.10 |
 | `docs/architecture/authorization.md` | Bootstrap chicken-and-egg removed; bounded-revocation design for the cache | 2.3, 2.4, 4.4 |
 | `docs/architecture/application-registry.md` | Out-of-MVP notice; per-app `users.read` capability and `allowed_user_fields` design (after 4.9 ADR) | this file (PR-time), 4.9 |
-| `docs/architecture/provisioning.md` | Out-of-MVP notice | this file (PR-time) |
+| `docs/architecture/provisioning.md` | Out-of-MVP notice; HR adapter ADR cross-link | this file (PR-time), 4.11 |
 | `docs/architecture/syskey-fallback.md` | Out-of-MVP notice | this file (PR-time) |
 | `docs/architecture/ai-gateway.md` | Out-of-MVP notice | this file (PR-time) |
 | `docs/architecture/agent-system.md` | Out-of-MVP notice | this file (PR-time) |
 | `docs/architecture/mcp-system.md` | Out-of-MVP notice | this file (PR-time) |
 | `docs/security/authentication.md` | Dev verifier + prod gate | [M1.4](https://github.com/pullPluto/Keys/issues/10), [M4.7](https://github.com/pullPluto/Keys/issues/28) |
 | `docs/security/authorization.md` | Bounded-revocation note for the cache | 2.4 |
-| `docs/security/auditing.md` | Allowlist referenced; retention owned; per-app mapping audit events (after 4.9 ADR) | 3.1, 4.2, 4.9 |
+| `docs/security/auditing.md` | Allowlist referenced; retention owned; per-app mapping audit events (after 4.9 ADR); `hr.sync.chosen_name` event (after 4.11) | 3.1, 4.2, 4.9, 4.11 |
 | `docs/security/encryption.md` | No new crypto in MVP | this file (PR-time) |
 | `docs/security/threat-detection.md` | Threat model work split | 4.3a–4.3d |
 | `docs/security/enterprise-baseline.md` | Bootstrap admin caveat | 2.3 |
@@ -945,6 +945,195 @@ the ADR does not close the gate.
     retention period for the mapping rows is part of M4.2's
     scope).
 
+### [Database, adr-required] Add `chosen_name` column to `users` and forbid non-HR writes
+
+- **Labels:** database, security, adr-required
+- **Milestone:** M4 — Production Gates
+- **Story Points:** 5
+- **Description:** M4.9 establishes that `chosen_name` is the
+  default human-readable field every PullPluto tool receives
+  from the staff directory, and that it is sourced from the HR
+  system — not written by any other code path. The `users`
+  table in D1 migration `0002` does not have a `chosen_name`
+  column. This issue lands the schema change and the
+  enforcement.
+
+  The migration is forward-only (AGENTS.md workflow rule 5
+  and the test in `tests/migration-shape.test.ts`). The
+  implementation must add the column without rewriting
+  migration `0002`, and must ship with a runtime enforcement
+  that the Worker route layer (or, more cheaply, the D1
+  implementation in `packages/identity`) refuses to write
+  `chosen_name` from any code path other than the HR
+  adapter. The HR adapter itself is a separate issue
+  (M4.11 below); this issue owns only the schema and the
+  write-restriction enforcement.
+- **Acceptance Criteria:**
+  - [ ] A new forward-only migration
+        `apps/worker/migrations/0003_users_chosen_name.sql`
+        exists and adds `chosen_name TEXT NOT NULL DEFAULT ''`
+        (or a similar default that the HR adapter overwrites
+        on first sync).
+  - [ ] `apps/worker/migrations/notes/0003_users_chosen_name.recovery.md`
+        records what the migration creates, the forward-only
+        contract, and the HR-adapter-only write rule.
+  - [ ] An additional assertion in
+        `tests/migration-shape.test.ts` forbids a
+        `chosen_name` column in any migration before `0003`
+        and forbids any non-`0003` migration that touches a
+        `chosen_name` column on the `users` table.
+  - [ ] The D1 user repository in `packages/identity` (when
+        it lands) has a unit test that asserts every write
+        method either rejects `chosen_name` or routes
+        through the HR-adapter-only path.
+  - [ ] The DDL change is cross-linked from
+        `docs/architecture/identity-model.md` and
+        `docs/decisions/ADR-015-per-app-identity-mapping.md`.
+  - [ ] If ADR-015 lands first and names a different storage
+        shape (for example, a separate `chosen_name_normalized`
+        column), the implementation in this issue is updated
+        to match before merge.
+- **Technical Notes:**
+  - The default value of `''` keeps existing rows valid; the
+    HR adapter will overwrite it on first sync.
+  - A `CHECK (chosen_name_updated_by = 'hr' OR chosen_name = '')`
+    constraint is one way to enforce the write rule at the
+    database level; the ADR (or the implementation issue) may
+    pick a different mechanism. The test must cover the
+    chosen mechanism.
+  - This issue is `adr-required` because it changes the
+    durable schema and inherits the per-app identity mapping
+    contract.
+- **Dependencies:**
+    [M4.9 #31](https://github.com/pullPluto/Keys/issues/31)
+    (the per-app identity mapping decision). The
+    implementation may begin in parallel but must reconcile
+    with the ADR before merge.
+
+### [Backend, adr-required] HR adapter for chosen_name provisioning
+
+- **Labels:** backend, security, adr-required
+- **Milestone:** M4 — Production Gates
+- **Story Points:** 5
+- **Description:** The HR system is the source of truth for
+  `chosen_name` (and, eventually, the source of truth for new
+  user records, role assignments, and offboarding). This
+  issue captures the HR adapter work that
+  [`docs/architecture/provisioning.md`](../architecture/provisioning.md)
+  and replacement-program milestone 3 describe in prose. The
+  adapter is the only code path that may write `chosen_name`
+  on a `users` row once M4.10 lands.
+
+  Out of scope for this issue (split into follow-up issues if
+  the work exceeds 5 points):
+
+  - The full HR-mediated provisioning queue (the larger
+    replacement-program milestone 3 work).
+  - Attribute, group, and manager mapping beyond
+    `chosen_name`.
+  - Reconciliation against an HR system of record.
+
+  The issue's scope is intentionally narrow: the minimum
+  viable HR adapter that writes `chosen_name` to existing
+  `users` rows via a signed, authenticated, idempotent call,
+  with replay protection, manual fallback queue, and a
+  bounded service-account credential.
+- **Acceptance Criteria:**
+  - [ ] `docs/decisions/ADR-016-hr-adapter.md` records the
+        chosen HR vendor/protocol/attribute contract, the
+        service-account model, the idempotency strategy, the
+        replay-protection design, and the manual fallback
+        queue.
+  - [ ] `packages/provisioning` exports an
+        `HrAdapter` interface with a `syncChosenName(input)`
+        method that is idempotent on the HR system of record
+        id.
+  - [ ] A Worker route `POST /v1/internal/hr/sync` accepts a
+        signed payload from the service account, applies the
+        write, and emits an audit event. The route is
+        `501` in production until M4.7 (issue #28) replaces
+        the dev credential verifier.
+  - [ ] The audit event type (`hr.sync.chosen_name`) is
+        added to the `AuditSink` allowlist in
+        `packages/audit`.
+  - [ ] A test asserts that a non-HR service account cannot
+        call the route.
+  - [ ] `docs/architecture/provisioning.md` cross-links
+        this issue and the ADR.
+- **Technical Notes:**
+  - The HR vendor is **TBD**. The ADR must record the
+    vendor and protocol (webhook, polling, or batch) once
+    chosen. Until the ADR is merged, the adapter
+    implementation lives behind a feature flag and is dev/
+    staging only.
+  - Replay protection uses a non-replayable signed timestamp
+    plus an idempotency key (already documented in
+    `docs/architecture/provisioning.md`).
+  - The adapter's service-account credential is bound via
+    a Cloudflare secret binding, never D1, KV, R2, or
+    source.
+- **Dependencies:**
+    [M4.9 #31](https://github.com/pullPluto/Keys/issues/31),
+    M4.10 (the schema change that adds `chosen_name`),
+    [M4.7 #28](https://github.com/pullPluto/Keys/issues/28)
+    (the production credential verifier).
+
+### [Docs, adr-required] Search ranking policy for staff directory
+
+- **Labels:** docs, adr-required
+- **Milestone:** M4 — Production Gates
+- **Story Points:** 3
+- **Description:** M4.9's design question 6 commits Keys to
+  matching on the full `chosen_name` string, case- and
+  diacritics-insensitive, with prefix matching by default.
+  It does not commit to a ranking policy. This issue
+  captures the decisions a future implementation will need
+  to make explicit:
+
+  - **Typo tolerance.** Do we allow one or two edit
+    distances? Do we normalize keyboard adjacency (qwerty
+    vs dvorak)? What is the precision/recall tradeoff?
+  - **Synonym handling.** Do nicknames, preferred names,
+    or romanized variants expand matches? Who maintains
+    the synonym list and how is it versioned?
+  - **Disambiguation on collision.** When two users share
+    a chosen name, does the API return all matches, page
+    them, or surface a tie-breaker? What tie-breaker
+    fields (department, manager, location) are exposed in
+    the search response, and to which applications?
+  - **Result limits and pagination.** What is the hard
+    cap? Are there per-application rate limits?
+  - **Privacy ceiling.** Search must not leak the
+    existence of users who are not yet active. How is
+    "active" defined for the search index? (Likely:
+    `users.status = 'active'` only.)
+
+  Out of scope: full-text search across all
+  application-defined fields, search-as-you-type
+  interaction patterns, faceted search, and ranking
+  signals derived from cross-tool activity.
+- **Acceptance Criteria:**
+  - [ ] `docs/decisions/ADR-017-search-ranking.md` records
+        the answers to the five questions above.
+  - [ ] The ADR names the algorithm or library (if any) and
+        justifies the choice against the Frameworks
+        sufficiency ladder (AGENTS.md rule 2).
+  - [ ] `docs/decisions/backlog/mvp.md` cross-doc table
+        references the ADR from M4.9's design question 6.
+  - [ ] The implementation issue (filed after the ADR)
+        references this ADR.
+- **Technical Notes:**
+  - This is a decision-only issue; the implementation
+    lands in a follow-up `adr-required` issue that opens
+    only after the ADR is merged.
+  - The MVP's first slice can use a simple `LIKE` query
+    with `LOWER(chosen_name) LIKE LOWER(?) || '%'`. The
+    ADR exists to decide whether the future production
+    version needs more.
+- **Dependencies:**
+    [M4.9 #31](https://github.com/pullPluto/Keys/issues/31)
+    (the design question 6 contract).
+
 ## Cross-phase quality bar
 
 - Every PR that lands an MVP issue must keep
@@ -970,9 +1159,10 @@ the ADR does not close the gate.
 4. M3: M3.1, M3.2, M3.3, M3.4, M3.5, M3.6, M3.7 (audit sink,
    wire audit, harness, route tests, cross-route test, audit
    test, leakage review).
-5. M4: M4.1, M4.2, M4.3, M4.4, M4.5, M4.6, M4.7, M4.8, M4.9 (backup
-   break-glass admin, retention, threat model, prod verifier,
-   README update, per-app identity mapping decision).
+5. M4: M4.1, M4.2, M4.3, M4.4, M4.5, M4.6, M4.7, M4.8, M4.9, M4.10,
+   M4.11, M4.12 (backup break-glass admin, retention, threat model,
+   prod verifier, README update, per-app identity mapping decision,
+   chosen_name schema, HR adapter, search ranking policy).
 
 Each phase is a release boundary. Don't promote a phase to "done"
 without its exit criteria passing in CI.
@@ -1012,5 +1202,8 @@ Each `[Mx.y]` issue below is also filed as a GitHub issue on
 | M4.7 | [#28](https://github.com/pullPluto/Keys/issues/28) | Reject `dev`/`staging` verifiers when `ENVIRONMENT=production` |
 | M4.8 | [#29](https://github.com/pullPluto/Keys/issues/29) | Update README "Status and delivery gates" section |
 | M4.9 | [#31](https://github.com/pullPluto/Keys/issues/31) | Per-app identity mapping for cross-tool user references |
+| M4.10 | [#34](https://github.com/pullPluto/Keys/issues/34) | Add `chosen_name` column to `users` and forbid non-HR writes |
+| M4.11 | [#32](https://github.com/pullPluto/Keys/issues/32) | HR adapter for chosen_name provisioning |
+| M4.12 | [#33](https://github.com/pullPluto/Keys/issues/33) | Search ranking policy for staff directory |
 
-Total: 28 issues. Largest is 5 story points; median is 3.
+Total: 31 issues. Largest is 5 story points; median is 3.
