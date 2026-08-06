@@ -1,0 +1,22 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "keys-pluto",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "d1_databases": [{
+    "binding": "KEYS_DB",
+    "database_name": "keys-pluto",
+    "database_id": "REPLACE_WITH_D1_DATABASE_ID"
+  }],
+  "kv_namespaces": [{
+    "binding": "KEYS_KV",
+    "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+  }],
+  "r2_buckets": [{
+    "binding": "KEYS_R2",
+    "bucket_name": "keys-pluto"
+  }],
+  "send_email": [{ "name": "EMAIL" }],
+  "vars": { "ENVIRONMENT": "development" }
+}

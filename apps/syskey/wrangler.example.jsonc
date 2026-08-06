@@ -1,0 +1,7 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "syskey",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-01",
+  "vars": { "ENVIRONMENT": "development" }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "@pullpluto/syskey-worker",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": { "dev": "wrangler dev" },
+  "devDependencies": { "wrangler": "4.119.0" }
+}

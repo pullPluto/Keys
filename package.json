@@ -1,0 +1,17 @@
+{
+  "name": "@pullpluto/keys",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PullPluto identity, policy, AI, and agent control plane",
+  "engines": { "node": ">=22" },
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "npm run dev --workspace=@pullpluto/keys-worker",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts"
+  },
+  "devDependencies": {
+    "tsx": "4.19.3",
+    "typescript": "5.8.3"
+  }
+}

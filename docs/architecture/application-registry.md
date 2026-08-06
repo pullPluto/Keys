@@ -1,0 +1,15 @@
+# Universal application registry
+
+The application registry is the universal, versioned mechanism for adding company tools as they are discovered. It is not an unrestricted form: unsafe configuration must fail validation and every privileged change is reviewed and audited.
+
+## Application properties
+
+Each application record supports: display name, owner, status, protocol(s), trusted redirect URIs, post-logout URIs, scopes, role/access-profile mapping, token/session policy override within approved bounds, provisioning mode, data classification, support contacts, criticality, rate limit, and migration notes. Secrets, private keys, and raw credentials are never application properties.
+
+## Protocol roadmap
+
+The registry has an extensible protocol field. The planned set is OIDC, OAuth client credentials, SAML, SCIM, proxy/header authentication, LDAP compatibility bridge, and service accounts. Each protocol is disabled by default, implemented only after it has a real target application and security test suite, and receives its own adapter. “Support all” does not mean every protocol is enabled for every application.
+
+## Change controls
+
+Creating an app, changing redirect URIs, enabling a protocol, adding a privileged scope, or changing a production access profile requires an authorized SysAdmin and audit record. High-risk changes require a second SysAdmin approval. Redirect URIs are exact, HTTPS-only production values; wildcards and arbitrary localhost exceptions are prohibited outside tightly controlled development configuration.
