@@ -11,3 +11,11 @@ Required before production:
 - recovery objectives backed by evidence.
 
 None of the above is complete in this scaffold. Never delete a remote resource as a substitute for recovery.
+
+The recovery owner and restoration exercise are tracked as Phase 4
+issues 4.2 (retention and classification) and 4.3d (incident response)
+in [`../decisions/backlog/mvp.md`](../decisions/backlog/mvp.md), which
+name the ADRs to be created (`ADR-013-retention-and-classification.md`
+and an incident-response ADR) in the same PRs as the decisions. The
+MVP's migration runner (Phase 0 issue 0.1) must record a recovery
+note for the first applied migration before any D1 changes ship.

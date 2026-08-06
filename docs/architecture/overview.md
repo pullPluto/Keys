@@ -4,6 +4,13 @@
 
 Keys is a policy enforcement point and control-plane record for PullPluto services. It is not a directory service, general-purpose secrets manager, or data warehouse. The initial deployment is one Cloudflare Worker named `keys-pluto` bound to D1, KV, and R2 resources sharing that name.
 
+The first deliverable is the **MVP** defined in
+[`../decisions/backlog/mvp.md`](../decisions/backlog/mvp.md). The MVP
+turns this scaffold into a real, exercised tenant + identity + policy +
+authorize + audit loop on D1, with dev/staging-only credentials.
+Everything in `## Non-goals in this increment` below remains out of
+scope until the MVP reaches the relevant phase or a future ADR opens it.
+
 ## Bounded contexts
 
 | Module | Owns | Must not own |
@@ -37,3 +44,10 @@ The Worker is the external enforcement boundary. Domain packages must remain por
 ## Non-goals in this increment
 
 OIDC/OAuth issuance, WebAuthn/TOTP, user interface, LDAP compatibility, provider credentials, model proxying, tool execution, rate limiting, production tenancy migration, and remote resource provisioning are deliberately outside the initial scaffold.
+
+The MVP backlog (M0–M3) stays inside the `Bounded contexts` table above
+and adds the dev/staging-only credential verifier, the policy upload +
+activation + decision routes, and the audit sink. It does **not**
+introduce OIDC issuance, the application registry, HR-driven
+provisioning, the AI/agent/MCP gateways, or SysKey activation flows —
+those remain non-goals until a future ADR opens them.

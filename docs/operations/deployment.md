@@ -4,6 +4,14 @@
 
 An accountable service owner must supply the Cloudflare account, environments, custom domains, secret-management procedure, approval gate, and rollback owner. Production deployment is blocked until the security and recovery decisions in this repository have evidence.
 
+The MVP (see [`../decisions/backlog/mvp.md`](../decisions/backlog/mvp.md))
+is dev/staging only. Every MVP route is rejected with `501` when
+`ENVIRONMENT === "production"` until the Phase 4 production
+credential verifier (issue 4.4) lands. The deployment environment
+itself is tracked as a remaining gate in the README and as Phase 4
+issue 4.5; do not invent an environment name to make a
+configuration look complete.
+
 ## Operator sequence
 
 1. Create the D1 database, KV namespace, and R2 bucket with the exact `keys-pluto` names using `infrastructure/scripts/provision-cloudflare.sh`.

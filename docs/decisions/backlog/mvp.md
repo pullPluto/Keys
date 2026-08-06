@@ -2,7 +2,8 @@
 
 **Owner:** commissioning user (initial accountable owner)
 **Status:** proposed; not yet committed
-**Companion to:** `docs/architecture/overview.md`, `AGENTS.md`, `docs/security/`, `docs/operations/`
+**Companion to:** `README.md`, `AGENTS.md`, `docs/architecture/overview.md`,
+`docs/security/`, `docs/operations/`, `docs/integrations/`
 
 This document is the first increment of work after the foundation commit
 (`acda5f1`) and the Mission Control boundary commit (`c91c9f9`). It is the
@@ -10,10 +11,35 @@ This document is the first increment of work after the foundation commit
 scaffold into a real, exercised control plane for **internal** identity and
 authorization, while keeping every AGENTS.md boundary intact.
 
+Every cross-document dependency is captured in this file. Each issue that
+requires an ADR points at the cross-doc sections it must update, and each
+out-of-scope area (OIDC, the application registry, HR provisioning, the
+AI/agent/MCP gateways, SysKey activation, email) calls out which future
+phase opens it.
+
 The backlog is intentionally narrow. It does **not** include OIDC issuance,
 WebAuthn, TOTP, the AI/agent/MCP gateways, the universal application registry,
 HR-driven provisioning, or SysKey break-glass behavior. Those are later
 phases (Phase 4+) and each gets its own ADR-driven increment.
+
+## Relationship to the replacement program
+
+The replacement program in
+[`docs/product/replacement-program.md`](../../product/replacement-program.md)
+defines 11 long-term milestones (0–10). The MVP phases here align as
+follows:
+
+| MVP phase | Replacement-program milestone | Notes |
+| --- | --- | --- |
+| M0 — MVP Foundations | 0 (Governance) + 1 (Secure platform) | Adds the migration runner, request envelope, and test harness. The replacement-program's milestone 0 inventory and milestone 1 environments are tracked separately as Phase 4 work and are out of MVP scope. |
+| M1 — Identity MVP | 2 (Core directory) | First slice: tenant, identity, dev verifier. Universal application registry, full user/role model, and HR provisioning stay in later replacement-program milestones. |
+| M2 — Authz MVP | 2 (Core directory) | First slice: policy upload, activation, default-deny authorize route. |
+| M3 — Audit & Hardening | 2 (Core directory) | First slice: audit allowlist, wire emit, end-to-end test, health-leakage test. |
+| M4 — Production Gates | 1, 3, 4, 5, 8, 10 | Decision-only work. Closes the production gates that AGENTS.md and README still list as `TBD`. |
+
+The MVP does not claim completion of any replacement-program milestone.
+Each replacement-program milestone has its own exit evidence; the MVP
+satisfies only the **first slice** of milestones 1 and 2.
 
 ## What "MVP" means here
 
@@ -36,14 +62,17 @@ That is the exit criteria for Phase 3. Everything before it is wiring.
 
 ## Out of scope (explicitly)
 
-- OIDC / OAuth client_credentials issuance
-- WebAuthn, TOTP, password storage, magic links
-- Universal application registry and protocol selection (OIDC/SAML/SCIM/LDAP-bridge)
-- HR-mediated provisioning queue
-- AI gateway, agent gateway, MCP policy
-- Production tenancy, backup/restore, SLOs, retention period approval
-- SysKey break-glass activation flows
-- Any deployment beyond `wrangler dev` against a personal sandbox account
+These are tracked elsewhere; none of them ships in the MVP:
+
+- OIDC / OAuth client_credentials issuance — replacement-program milestone 4.
+- WebAuthn, TOTP, password storage, magic links — replacement-program milestone 5.
+- Universal application registry and protocol selection — replacement-program milestone 6.
+- HR-mediated provisioning queue — replacement-program milestone 3.
+- AI gateway, agent gateway, MCP policy — replacement-program milestone 10.
+- Production tenancy, backup/restore, SLOs, retention period approval — Phase 4 of this backlog.
+- SysKey break-glass activation flows — replacement-program milestone 8.
+- Any deployment beyond `wrangler dev` against a personal sandbox account — Phase 4 issue 4.5.
+- Transactional email — recorded in `docs/operations/email.md`; not opened by any issue in this backlog.
 
 ## Conventions for the issues in this backlog
 
@@ -51,10 +80,46 @@ That is the exit criteria for Phase 3. Everything before it is wiring.
   `testing`, `infrastructure`, `adr-required`.
 - Milestone: `M0 — MVP Foundations`, `M1 — Identity MVP`,
   `M2 — Authz MVP`, `M3 — Audit & Hardening`, `M4 — Production Gates`.
-- Story points: 1, 2, 3, 5, or 8 (Fibonacci).
+- Story points: 1, 2, 3, or 5 (Fibonacci).
 - Every issue names the file(s) it will create or modify.
 - Every issue with `adr-required` must land an ADR in `docs/decisions/`
-  in the same PR.
+  in the same PR, and must update every cross-doc link in this file's
+  "Cross-doc updates" callout below.
+- No issue is larger than 5 story points. If something feels like a 5,
+  the next pass splits it.
+
+## Cross-doc updates required by issues in this backlog
+
+The MVP touches 15 documentation files. Every PR that lands an MVP
+issue must keep these files consistent. The backlog issues point at
+the lines below when an issue specifically owns a section.
+
+| Doc | What changes | Owned by issue |
+| --- | --- | --- |
+| `AGENTS.md` | MVP scope note; new workflow rule (issues ≤ 5 pts); gate list points at Phase 4 | this file (PR-time) |
+| `README.md` | New "MVP definition" section; documentation index; gate list | this file (PR-time) |
+| `docs/architecture/overview.md` | Purpose + Non-goals reference this backlog | this file (PR-time) |
+| `docs/architecture/data-flow.md` | Steps 2–4, 6 made real; health-leakage test | 3.4 |
+| `docs/architecture/identity-model.md` | Tenant + identity data model exercised | 1.1, 1.2 |
+| `docs/architecture/authorization.md` | Bootstrap chicken-and-egg removed; bounded-revocation design for the cache | 2.3, 2.4, 4.4 |
+| `docs/architecture/application-registry.md` | Out-of-MVP notice | this file (PR-time) |
+| `docs/architecture/provisioning.md` | Out-of-MVP notice | this file (PR-time) |
+| `docs/architecture/syskey-fallback.md` | Out-of-MVP notice | this file (PR-time) |
+| `docs/architecture/ai-gateway.md` | Out-of-MVP notice | this file (PR-time) |
+| `docs/architecture/agent-system.md` | Out-of-MVP notice | this file (PR-time) |
+| `docs/architecture/mcp-system.md` | Out-of-MVP notice | this file (PR-time) |
+| `docs/security/authentication.md` | Dev verifier + prod gate | 1.5, 4.4 |
+| `docs/security/authorization.md` | Bounded-revocation note for the cache | 2.4 |
+| `docs/security/auditing.md` | Allowlist referenced; retention owned | 3.1, 4.2 |
+| `docs/security/encryption.md` | No new crypto in MVP | this file (PR-time) |
+| `docs/security/threat-detection.md` | Threat model work split | 4.3a–4.3d |
+| `docs/security/enterprise-baseline.md` | Bootstrap admin caveat | 2.3 |
+| `docs/operations/ownership.md` | Backup break-glass admin ADR | 4.1 |
+| `docs/operations/deployment.md` | Dev/staging-only enforcement; environment gate | 0.1, 4.5 |
+| `docs/operations/backups.md` | Recovery exercise tracked | 0.1, 4.2, 4.3d |
+| `docs/operations/monitoring.md` | Audit failure → 500 | 3.2 |
+| `docs/operations/email.md` | Out-of-MVP notice | this file (PR-time) |
+| `docs/integrations/mission-control.md` | Out-of-MVP notice | this file (PR-time) |
 
 ## Phase 0 — MVP Foundations (M0)
 
@@ -63,7 +128,8 @@ That is the exit criteria for Phase 3. Everything before it is wiring.
 > shape. No new domain behavior yet.
 
 Exit criteria: `npm run typecheck` and `npm test` pass; a second route
-exists in the Worker; the migration runner is wired through Wrangler.
+exists in the Worker; the migration runner is wired through Wrangler;
+`AGENTS.md` and `README.md` reference this backlog.
 
 ### [Infra] Wire D1 migration runner and seed bootstrap
 
@@ -84,6 +150,8 @@ exists in the Worker; the migration runner is wired through Wrangler.
         migration has a forward-only forward step (no DROP/ALTER of an
         already-applied column without a new migration).
   - [ ] `README.md` updated with the apply command (dev only).
+  - [ ] `docs/operations/deployment.md` Operator sequence step 3
+        references the same script.
 - **Technical Notes:**
   - Prefer `wrangler d1 migrations apply` if the local Wrangler version
     supports it (4.119.0 should); otherwise shell out to a documented
@@ -112,6 +180,10 @@ tests/migration-shape.test.ts
   - scans migrations/*.sql
   - asserts no file contains "DROP COLUMN" / "RENAME COLUMN"
   - asserts every file ends with a trailing newline
+
+apps/worker/migrations/notes/0001_control_plane.recovery.md
+  - empty-placeholder note (or D1 metadata row) that names the
+    recovery contact as TBD and points at this backlog
 ```
 
 </details>
@@ -137,12 +209,15 @@ tests/migration-shape.test.ts
   - [ ] `/healthz` is unchanged but routed through the new envelope's
         content-type helper so it stays byte-identical to the existing
         test assertion.
+  - [ ] When `ENVIRONMENT === "production"`, the envelope returns
+        `501` for any non-health route. This is the dev/staging-only
+        gate referenced in `docs/operations/deployment.md`.
 - **Technical Notes:**
   - Use the platform `Request`/`Response` only; do **not** introduce
     a router framework yet (sufficiency ladder).
   - Keep envelope dependency-free; validation can be a tiny hand-rolled
     schema until Phase 4 when something heavier is justified by an ADR.
-- **Dependencies:** Phase 0 issue 1 (migration runner) — non-blocking
+- **Dependencies:** 0.1 (migration runner) — non-blocking
   but recommended first.
 
 <details>
@@ -168,6 +243,10 @@ export function errorResponse(
   message: string,
   correlationId: string,
 ): Response { /* ... */ }
+
+export function isProduction(env: { ENVIRONMENT: string }): boolean {
+  return env.ENVIRONMENT === "production";
+}
 ```
 
 </details>
@@ -209,7 +288,7 @@ export function errorResponse(
 - **Technical Notes:** The D1 stub needs to support `prepare(query).bind(...).first()` /
   `.all()` / `.run()` at minimum; KV and R2 can be `Map`-backed. No
   dependency on `better-sqlite3` unless an ADR justifies it.
-- **Dependencies:** Phase 0 issue 2 (envelope).
+- **Dependencies:** 0.2 (envelope).
 
 ## Phase 1 — Identity MVP (M1)
 
@@ -238,9 +317,11 @@ verified principal. The credential verifier is a dev-only stub
         constraint remains the source of truth).
   - [ ] New unit test file `packages/identity/test/tenant.test.ts`
         uses an in-memory fake repository.
+  - [ ] `docs/architecture/identity-model.md` is updated to mention
+        that the MVP exercises the `Organization` aggregate end to end.
 - **Technical Notes:** Stay platform-agnostic. No Cloudflare types in
   the package.
-- **Dependencies:** Phase 0 issue 3 (ADR-009).
+- **Dependencies:** 0.3 (ADR-009).
 
 <details>
 <summary>Boilerplate Code</summary>
@@ -285,7 +366,7 @@ export interface TenantService {
 - **Technical Notes:** D1 is SQLite; use `INSERT ... ON CONFLICT DO
   NOTHING` to make replays idempotent. Bind every value, never
   interpolate.
-- **Dependencies:** Phase 1 issue 1; Phase 0 issue 4 (env test harness).
+- **Dependencies:** 1.1; 0.4 (env test harness).
 
 ### [Backend] `POST /v1/tenants` and `POST /v1/identities` Worker routes
 
@@ -300,17 +381,17 @@ export interface TenantService {
   - [ ] Routes are registered in `apps/worker/src/index.ts` next to
         the existing `/healthz` branch.
   - [ ] Both routes return `501` if `ENVIRONMENT === "production"`
-        (MVP is dev/staging only; enforce it in the envelope).
+        (MVP is dev/staging only; enforced in the envelope, see 0.2).
   - [ ] Every successful and failed call emits an `audit_event` row
-        (see Phase 3 audit issue) — write a TODO marker so the
-        audit emit lands in Phase 3.
+        (see 3.1 / 3.2) — write a TODO marker so the audit emit lands
+        in Phase 3.
   - [ ] Tests in `tests/identity-routes.test.ts` cover happy path,
         duplicate slug (409), bad JSON (400), and prod environment
         rejection.
 - **Technical Notes:** Validate the slug against a strict regex
   (`^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$`) and reject reserved slugs
   (`admin`, `system`, `syskey`, `keys`).
-- **Dependencies:** Phase 1 issues 1 + 2.
+- **Dependencies:** 1.1, 1.2.
 
 ### [Security, adr-required] Dev-only credential verifier contract
 
@@ -330,13 +411,15 @@ export interface TenantService {
   - [ ] ADR-010-dev-credential-verifier.md in `docs/decisions/`
         states threat model, when to retire, and how production
         verifiers will replace it.
+  - [ ] `docs/security/authentication.md` is updated to call out
+        the dev verifier and the Phase 4 production verifier.
   - [ ] Tests cover: expired credential, wrong audience, wrong
         issuer, valid dev credential, prod-environment rejection.
 - **Technical Notes:** Use `crypto.subtle` only — no Node-only
   crypto APIs in the Worker bundle. Tokens carry `iss`, `aud`,
   `sub`, `iat`, `exp`. Subject is the external `provider_subject`.
-- **Dependencies:** Phase 1 issue 3; Phase 0 issue 3 (ADR-009 must
-  exist first so this ADR can reference it).
+- **Dependencies:** 1.3; 0.3 (ADR-009 must exist first so this ADR
+  can reference it).
 
 ## Phase 2 — Authorization MVP (M2)
 
@@ -377,11 +460,12 @@ export interface TenantService {
   - [ ] `tests/policy-d1.test.ts` round-trips a policy from draft
         through activation and verifies only one `active` per org.
   - [ ] An audit row is written on activation (deferred audit
-        contract; can be a console.log in dev with a TODO marker).
+        contract; can be a console.log in dev with a TODO marker
+        replaced by 3.2).
 - **Technical Notes:** D1 is single-writer per database; a simple
   `UPDATE ... WHERE status='active'` followed by `INSERT` is fine
   for the MVP volume. Document the volume assumption in the ADR.
-- **Dependencies:** Phase 2 issue 1.
+- **Dependencies:** 2.1.
 
 ### [Backend] `POST /v1/policies` and `POST /v1/policies/:id/activate` routes
 
@@ -399,14 +483,18 @@ export interface TenantService {
         the policy itself for bootstrap, then from the role
         assignments in Phase 4.
   - [ ] Re-activating an already-active version is a no-op + 200.
+  - [ ] `docs/security/enterprise-baseline.md` is updated to flag
+        the bootstrap caveat ("single identity can grant a
+        privileged action without two-person control until
+        Phase 4").
   - [ ] Tests cover: invalid JSON, missing fields, activation by
         non-admin (403), double activation idempotency.
 - **Technical Notes:** Bootstrap chicken-and-egg: the first
   `policy.admin` must come from a hard-coded dev list read from
   `Env.MVP_BOOTSTRAP_ADMINS` (a JSON array). Document that this
   variable is removed in Phase 4.
-- **Dependencies:** Phase 2 issues 1 + 2; Phase 1 issue 4
-  (verifier must exist for principal check).
+- **Dependencies:** 2.1, 2.2; 1.5 (verifier must exist for principal
+  check).
 
 ### [Backend] `POST /v1/authorize` and the default-deny rule
 
@@ -425,12 +513,17 @@ export interface TenantService {
         and a TTL ≤ 5s.
   - [ ] When a policy is activated, the next call must observe the
         new version within 5s.
+  - [ ] `docs/security/authorization.md` is updated to record the
+        bounded-revocation design (5 s window + in-D1 policy
+        version bump on every activation).
+  - [ ] `docs/architecture/authorization.md` is updated to note
+        the bootstrap removal in Phase 4.
   - [ ] Tests: default deny without a policy, allow after
         activation, deny after activation of a different version.
 - **Technical Notes:** Add a TODO note that production must use a
   documented bounded-revocation design before KV can serve
   decisions.
-- **Dependencies:** Phase 2 issue 3.
+- **Dependencies:** 2.3.
 
 ## Phase 3 — Audit & Hardening (M3)
 
@@ -455,6 +548,8 @@ export interface TenantService {
         disallowed keys are not present in the row.
   - [ ] ADR-011-audit-redaction.md records the allowlist and the
         rationale (what is allowed, why, retention).
+  - [ ] `docs/security/auditing.md` is updated to reference the
+        ADR and the MVP envelope.
 - **Technical Notes:** The AGENTS.md rule "Do not log bearer
   tokens, prompts, model responses, or raw sensitive attributes by
   default" is the source of truth. The allowlist encodes what
@@ -477,30 +572,87 @@ export interface TenantService {
         `outcome`.
   - [ ] Tests assert one row per call and that audit failure
         produces a 500.
+  - [ ] `docs/operations/monitoring.md` is updated to record the
+        "audit failure → 500" behavior as an MVP hard rule, with
+        a note that production may revisit it.
 - **Technical Notes:** Audit must be best-effort only when
   explicitly flagged (Phase 4 retention design will revisit this
   if needed). For MVP, fail-closed is correct.
-- **Dependencies:** Phase 3 issue 1.
+- **Dependencies:** 3.1.
 
-### [Testing] End-to-end happy path test against the test harness
+### [Testing] Test harness builder for authenticated request sequences
 
 - **Labels:** testing, mvp
 - **Milestone:** M3 — Audit & Hardening
-- **Story Points:** 5
-- **Description:** A single test that drives the full MVP loop:
-  create tenant → create identity → verify credential → upload
-  draft policy → activate → authorize (allow) → authorize unknown
-  action (deny) → query audit log. Lives in
-  `tests/mvp-end-to-end.test.ts`.
+- **Story Points:** 2
+- **Description:** A small helper that builds a sequence of
+  `Request` objects pre-signed with the dev HMAC verifier and
+  threads a single `correlationId` through them. Lives in
+  `tests/_support/sequences.ts` and is the only place tests
+  construct authenticated requests.
 - **Acceptance Criteria:**
-  - [ ] One test file, one `node:test` describe block.
-  - [ ] Asserts the audit log has exactly the expected number
-        of rows and that the `policy_version` on the allow
-        decision matches the activated version.
-  - [ ] Runs in under 2s on a developer laptop.
-- **Technical Notes:** This is the gate the README "Local
-  development" section can point at as proof the MVP is real.
-- **Dependencies:** Phase 3 issues 1 + 2.
+  - [ ] `createAuthedRequest({ method, path, body, identity })`
+        returns a `Request` with a valid dev credential header.
+  - [ ] `runSequence(env, [req1, req2, ...])` returns an array of
+        responses and a single `correlationId` shared across them.
+  - [ ] The helper refuses to issue a request when
+        `env.ENVIRONMENT === "production"`.
+- **Technical Notes:** Depends on 1.5; uses `DevHmacVerifier` to
+  sign each request, so the helper can be used to exercise 1.3,
+  2.3, 2.4, 3.2, and 3.3b–3.3d without re-implementing the
+  signing path.
+- **Dependencies:** 0.4 (env harness), 1.5 (dev verifier).
+
+### [Testing] Per-route happy-path coverage (tenants, identities, policies, authorize)
+
+- **Labels:** testing, mvp
+- **Milestone:** M3 — Audit & Hardening
+- **Story Points:** 2
+- **Description:** One test per route, in its own file, that drives
+  the route through `runSequence` and asserts the response shape.
+  No cross-route assertions here — those live in 3.3c.
+- **Acceptance Criteria:**
+  - [ ] `tests/routes/tenants.test.ts`,
+        `tests/routes/identities.test.ts`,
+        `tests/routes/policies.test.ts`,
+        `tests/routes/authorize.test.ts` exist.
+  - [ ] Each test exercises exactly one route's happy path and one
+        documented failure case (400/403/409).
+  - [ ] Tests run in under 500 ms each on a developer laptop.
+- **Dependencies:** 3.3 (the harness).
+
+### [Testing] Cross-route authorization decision assertions
+
+- **Labels:** testing, mvp
+- **Milestone:** M3 — Audit & Hardening
+- **Story Points:** 2
+- **Description:** Drives the full sequence: create tenant → create
+  identity → verify → upload draft policy → activate → authorize
+  (allow) → authorize unknown action (deny). Asserts the decision
+  body's `policy_version` matches the activated version and that
+  the unknown action returns `deny` with a stable `reason_code`.
+- **Acceptance Criteria:**
+  - [ ] `tests/routes/authorize-cross-route.test.ts` exists.
+  - [ ] The test runs in under 1 s on a developer laptop.
+  - [ ] The test does not assert on audit row counts; that lives
+        in 3.3d.
+- **Dependencies:** 3.3, 3.3a.
+
+### [Testing] Audit log shape and count assertions
+
+- **Labels:** testing, mvp
+- **Milestone:** M3 — Audit & Hardening
+- **Story Points:** 1
+- **Description:** The single end-to-end test that asserts the
+  audit log has exactly the expected number of rows and that the
+  `policy_version` on the allow decision matches the activated
+  version. Runs the same sequence as 3.3b but inspects the
+  `audit_events` table.
+- **Acceptance Criteria:**
+  - [ ] `tests/audit-end-to-end.test.ts` exists.
+  - [ ] Asserts one `audit_event` per request and that audit
+        failure produces a 500.
+- **Dependencies:** 3.1, 3.2, 3.3a, 3.3b.
 
 ### [Security] Health endpoint leakage review
 
@@ -515,6 +667,8 @@ export interface TenantService {
 - **Acceptance Criteria:**
   - [ ] `tests/health-leakage.test.ts` asserts the response body
         has exactly the two allowed keys for both Workers.
+  - [ ] `docs/architecture/data-flow.md` is updated to reference
+        the test as the pinning contract for the health response.
   - [ ] `docs/security/auditing.md` (or a sibling) records the
         rule and references the test.
 - **Dependencies:** none.
@@ -527,7 +681,9 @@ export interface TenantService {
 
 These issues are intentionally underspecified. Each one becomes its
 own ADR + implementation increment when the owner decides to clear
-the gate.
+the gate. Closing a gate requires the corresponding ADR to be merged
+in the **same** PR as the code/config change; a code change without
+the ADR does not close the gate.
 
 ### [Decision, adr-required] Name a backup break-glass administrator
 
@@ -558,24 +714,81 @@ the gate.
         retention numbers and a review schedule.
   - [ ] ADR-013-retention-and-classification.md records what
         data class lives in D1, KV, and R2.
+  - [ ] `docs/operations/backups.md` is updated to point at the
+        ADR.
+- **Dependencies:** 3.1 (the allowlist must be defined before the
+  retention numbers can be approved).
 
-### [Decision, adr-required] Threat model, incident response, and recovery exercise
+### [Docs] Assets inventory for the threat model
 
-- **Labels:** docs, adr-required, security
+- **Labels:** docs, security
 - **Milestone:** M4 — Production Gates
-- **Story Points:** 5
-- **Description:** Capture the threat model (ref
-  `docs/security/threat-detection.md`), the incident response
-  procedure (new doc), and schedule the first tabletop recovery
-  exercise.
+- **Story Points:** 2
+- **Description:** Concrete list of components (Worker, D1, KV, R2,
+  each domain package) and data classes (tenant, identity,
+  credential, policy, audit event, role assignment) with a named
+  owner for each row.
 - **Acceptance Criteria:**
-  - [ ] `docs/security/threat-model.md` (new) lists assets,
-        adversaries, attack surfaces, and mitigations mapped to
-        the existing controls.
-  - [ ] `docs/operations/incident-response.md` (new) defines
-        severity levels, on-call, and communication channels.
+  - [ ] `docs/security/threat-model.md` (new) has a
+        "Components and data" section.
+  - [ ] Every row has an owner; rows with `TBD` owners are
+        tracked as separate Phase 4 issues.
+  - [ ] `docs/security/threat-detection.md` cross-links the new
+        file.
+- **Dependencies:** 4.1 (the backup break-glass admin should be
+  an asset owner before the inventory is complete).
+
+### [Docs] Adversary and attack surface list
+
+- **Labels:** docs, security
+- **Milestone:** M4 — Production Gates
+- **Story Points:** 2
+- **Description:** Threat-ID-indexed list of adversary classes
+  (external attacker, malicious insider, compromised operator,
+  Cloudflare compromise) and the attack surfaces they can reach
+  (Worker route, D1 row, KV cache, R2 object, OAuth issuer,
+  email). The list is **not** a mitigation matrix — that lives
+  in 4.3c.
+- **Acceptance Criteria:**
+  - [ ] `docs/security/threat-model.md` has an "Adversaries and
+        attack surfaces" section.
+  - [ ] Every threat has a stable `T-####` ID.
+  - [ ] `docs/security/threat-detection.md` cross-links the new
+        file.
+- **Dependencies:** 4.3a.
+
+### [Docs] Mitigation mapping for each threat
+
+- **Labels:** docs, security
+- **Milestone:** M4 — Production Gates
+- **Story Points:** 2
+- **Description:** For each `T-####` in 4.3b, link the existing
+  control that mitigates it (or record the gap). The result is
+  the basis for any "controls deployed" claim.
+- **Acceptance Criteria:**
+  - [ ] `docs/security/threat-model.md` has a "Mitigations"
+        section with one row per `T-####`.
+  - [ ] Gaps are recorded as new Phase 4+ issues, not silently
+        accepted.
+- **Dependencies:** 4.3a, 4.3b.
+
+### [Docs] Incident response runbook
+
+- **Labels:** docs, security
+- **Milestone:** M4 — Production Gates
+- **Story Points:** 3
+- **Description:** Severity levels, on-call rotation, comms
+  channels, escalation paths, and a tabletop recovery exercise
+  date. Lives in `docs/operations/incident-response.md` (new).
+- **Acceptance Criteria:**
+  - [ ] `docs/operations/incident-response.md` exists and is
+        cross-linked from `docs/operations/monitoring.md` and
+        `docs/operations/backups.md`.
+  - [ ] `docs/security/threat-detection.md` references the
+        runbook as the action path for any threat that fires.
   - [ ] A dated recovery exercise is recorded in
         `docs/operations/backups.md`.
+- **Dependencies:** 4.3a.
 
 ### [Backend] Reject `dev`/`staging` verifiers when `ENVIRONMENT=production`
 
@@ -592,13 +805,17 @@ the gate.
         and the import becomes a tree-shake-safe stub.
   - [ ] ADR-014-production-credential-verifier.md records the
         chosen issuer and the rotation procedure.
+  - [ ] `docs/security/authentication.md` updated to mark the dev
+        verifier as retired.
+- **Dependencies:** 1.5 (the dev verifier must exist before being
+  replaced).
 
 ### [Docs] Update README "Status and delivery gates" section
 
 - **Labels:** docs
 - **Milestone:** M4 — Production Gates
 - **Story Points:** 1
-- **Description:** Once the previous four issues are landed, the
+- **Description:** Once the previous issues are landed, the
   README's gate list should be empty. Update the section to
   reflect the cleared state and link each ADR.
 
@@ -613,18 +830,33 @@ the gate.
   sufficiency ladder).
 - No code path may read from KV to make an authorization decision
   without the bounded-revocation design in an ADR.
+- No issue is larger than 5 story points. If a follow-up issue
+  feels like an 8, split it the same way 3.3 and 4.3 were split.
 
 ## Suggested sequencing
 
-1. Phase 0 issues 3, 1, 2, 4 (ADR, migration runner, envelope,
+1. M0: 0.3, 0.1, 0.2, 0.4 (ADR, migration runner, envelope,
    test harness).
-2. Phase 1 issues 1, 2, 3, 4, 5 (identity contract, D1 repos,
+2. M1: 1.1, 1.2, 1.3, 1.4, 1.5 (identity contract, D1 repos,
    routes, ADR-010, verifier).
-3. Phase 2 issues 1, 2, 3, 4 (authz contract, D1 policy, routes,
+3. M2: 2.1, 2.2, 2.3, 2.4 (authz contract, D1 policy, routes,
    authorize route).
-4. Phase 3 issues 1, 2, 3, 4 (audit sink, wire audit, end-to-end
+4. M3: 3.1, 3.2, 3.3, 3.3a, 3.3b, 3.3c, 3.3d, 3.4 (audit sink,
+   wire audit, harness, route tests, cross-route test, audit
    test, leakage review).
-5. Phase 4 issues only after the owner clears each gate.
+5. M4: 4.1, 4.2, 4.3a, 4.3b, 4.3c, 4.3d, 4.4, 4.5 (backup
+   break-glass admin, retention, threat model, prod verifier,
+   README update).
 
 Each phase is a release boundary. Don't promote a phase to "done"
 without its exit criteria passing in CI.
+
+## Issue index
+
+- M0: 0.1, 0.2, 0.3, 0.4
+- M1: 1.1, 1.2, 1.3, 1.4, 1.5
+- M2: 2.1, 2.2, 2.3, 2.4
+- M3: 3.1, 3.2, 3.3, 3.3a, 3.3b, 3.3c, 3.3d, 3.4
+- M4: 4.1, 4.2, 4.3a, 4.3b, 4.3c, 4.3d, 4.4, 4.5
+
+Total: 27 issues. Largest is 5 story points; median is 3.

@@ -2,6 +2,13 @@
 
 Mission Control is a separate downloadable desktop application. Keys is its identity, authorization, application-tile, project-assignment, action-policy, artifact-authorization, and presence authority. Mission Control is responsible for its UI, local terminal, device detection, local dependency installation, package execution, app lock, and user-visible update notices.
 
+This document is the **integration boundary**, not an implementation
+plan. The MVP (see [`../decisions/backlog/mvp.md`](../decisions/backlog/mvp.md))
+does not include any Mission Control client behavior, any OIDC issuer
+changes driven by Mission Control, or any new service API surface for
+device sessions. Each of those lands in a future phase that opens
+with its own ADR.
+
 ## Keys provides
 
 - authenticated user, group, role, project-assignment, and device-session claims;

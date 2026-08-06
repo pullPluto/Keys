@@ -2,6 +2,14 @@
 
 The AI gateway is an adapter boundary, not a provider implementation. A future request must establish the caller, tenant, requested model capability, and budget/policy context before a provider adapter is selected. Provider selection follows a configured allow-list and records a correlation ID.
 
+The AI gateway is **out of scope for the MVP** (see
+[`../decisions/backlog/mvp.md`](../decisions/backlog/mvp.md)). The
+`packages/ai-gateway` interfaces stay as TypeScript contracts only
+and no model provider, no provider credential, and no model proxying
+land until a future phase opens with its own ADR. The MVP does not
+introduce any cloud secret bindings, any D1 rows for model
+capabilities, or any audit event type for model calls.
+
 Initial policy requirements:
 
 1. Authorize the model capability before creating an outbound request.

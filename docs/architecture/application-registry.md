@@ -2,6 +2,15 @@
 
 The application registry is the universal, versioned mechanism for adding company tools as they are discovered. It is not an unrestricted form: unsafe configuration must fail validation and every privileged change is reviewed and audited.
 
+The application registry is **out of scope for the MVP** (see
+[`../decisions/backlog/mvp.md`](../decisions/backlog/mvp.md)). The
+MVP introduces the `applications` and `application_access_profiles`
+tables so the data model is in place, but does not add the registry
+routes, the protocol selection UI, or the high-risk-change approval
+flow described below. Those land in a future phase that opens with
+its own ADR, and they require the Phase 4 production gates to be
+closed first.
+
 ## Application properties
 
 Each application record supports: display name, owner, status, protocol(s), trusted redirect URIs, post-logout URIs, scopes, role/access-profile mapping, token/session policy override within approved bounds, provisioning mode, data classification, support contacts, criticality, rate limit, and migration notes. Secrets, private keys, and raw credentials are never application properties.
