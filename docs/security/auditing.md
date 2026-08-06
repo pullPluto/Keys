@@ -11,3 +11,9 @@ the same PR as the code change. The MVP envelope returns an
 time.
 
 Retention period, export controls, legal hold, deletion workflow, access roles, SIEM destination, and incident escalation are **TBD by accountable owners** and tracked as Phase 4 issues 4.2 (retention) and 4.3d (incident response). D1 audit tables do not make events tamper-proof or satisfy a compliance obligation by themselves.
+
+A future per-app identity mapping layer (see
+[issue M4.9 / ADR-015](../decisions/backlog/mvp.md#decision-adr-required-per-app-identity-mapping-for-cross-tool-user-references))
+will introduce its own audit event type for handle resolution and
+field-shaped reads; that event type is defined inside the ADR, not
+in this document, so the allowlist can evolve with the design.

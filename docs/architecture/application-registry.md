@@ -22,3 +22,12 @@ The registry has an extensible protocol field. The planned set is OIDC, OAuth cl
 ## Change controls
 
 Creating an app, changing redirect URIs, enabling a protocol, adding a privileged scope, or changing a production access profile requires an authorized SysAdmin and audit record. High-risk changes require a second SysAdmin approval. Redirect URIs are exact, HTTPS-only production values; wildcards and arbitrary localhost exceptions are prohibited outside tightly controlled development configuration.
+
+A future per-app **user field allow-list** (`allowed_user_fields`)
+is being designed in
+[issue M4.9 / ADR-015](../decisions/backlog/mvp.md#decision-adr-required-per-app-identity-mapping-for-cross-tool-user-references).
+When that ADR lands, each application registration will declare
+which `users` columns the application is approved to receive, and
+any change to that allow-list is a privileged change that requires
+a second SysAdmin approval under the same rule as the existing
+high-risk-change list.

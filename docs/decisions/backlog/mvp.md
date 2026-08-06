@@ -100,9 +100,9 @@ the lines below when an issue specifically owns a section.
 | `README.md` | New "MVP definition" section; documentation index; gate list | this file (PR-time) |
 | `docs/architecture/overview.md` | Purpose + Non-goals reference this backlog | this file (PR-time) |
 | `docs/architecture/data-flow.md` | Steps 2–4, 6 made real; health-leakage test | 3.4 |
-| `docs/architecture/identity-model.md` | Tenant + identity data model exercised | 1.1, 1.2 |
+| `docs/architecture/identity-model.md` | Tenant + identity data model exercised; per-app identity mapping ADR cross-link | 1.1, 1.2, 4.9 |
 | `docs/architecture/authorization.md` | Bootstrap chicken-and-egg removed; bounded-revocation design for the cache | 2.3, 2.4, 4.4 |
-| `docs/architecture/application-registry.md` | Out-of-MVP notice | this file (PR-time) |
+| `docs/architecture/application-registry.md` | Out-of-MVP notice; per-app `users.read` capability and `allowed_user_fields` design (after 4.9 ADR) | this file (PR-time), 4.9 |
 | `docs/architecture/provisioning.md` | Out-of-MVP notice | this file (PR-time) |
 | `docs/architecture/syskey-fallback.md` | Out-of-MVP notice | this file (PR-time) |
 | `docs/architecture/ai-gateway.md` | Out-of-MVP notice | this file (PR-time) |
@@ -110,7 +110,7 @@ the lines below when an issue specifically owns a section.
 | `docs/architecture/mcp-system.md` | Out-of-MVP notice | this file (PR-time) |
 | `docs/security/authentication.md` | Dev verifier + prod gate | [M1.4](https://github.com/pullPluto/Keys/issues/10), [M4.7](https://github.com/pullPluto/Keys/issues/28) |
 | `docs/security/authorization.md` | Bounded-revocation note for the cache | 2.4 |
-| `docs/security/auditing.md` | Allowlist referenced; retention owned | 3.1, 4.2 |
+| `docs/security/auditing.md` | Allowlist referenced; retention owned; per-app mapping audit events (after 4.9 ADR) | 3.1, 4.2, 4.9 |
 | `docs/security/encryption.md` | No new crypto in MVP | this file (PR-time) |
 | `docs/security/threat-detection.md` | Threat model work split | 4.3a–4.3d |
 | `docs/security/enterprise-baseline.md` | Bootstrap admin caveat | 2.3 |
@@ -819,6 +819,111 @@ the ADR does not close the gate.
   README's gate list should be empty. Update the section to
   reflect the cleared state and link each ADR.
 
+### [Decision, adr-required] Per-app identity mapping for cross-tool user references
+
+- **Labels:** backend, security, adr-required, docs
+- **Milestone:** M4 — Production Gates
+- **Story Points:** 5
+- **Description:** Today there is no shared user identifier across
+  PullPluto tools. A `users` row in D1 has an internal id, an
+  organization id, a `primary_email`, and a `display_name` — but
+  no stable, app-independent handle that one tool can hand to
+  another tool so the second tool can resolve "the same person."
+  This is the prerequisite for live staff-directory search and
+  for any cross-tool "mention" or notification flow.
+
+  This issue is the *decision* half of the work. The implementation
+  lives in a follow-up issue (or several) that opens only after
+  the ADR is merged. The decision must answer five questions:
+
+  1. **Universal user UUID.** Keys generates a stable
+     `user_uuid` per `users` row, written once and never rotated
+     except under an explicit re-keying ADR. The UUID is
+     *internal* — it never appears in any application-facing
+     response.
+  2. **Per-app opaque handle.** When an application calls Keys
+     to resolve or search users, Keys returns a **per-app
+     opaque identifier** (`app_user_id`) that maps to the
+     internal `user_uuid` inside Keys. The mapping is keyed by
+     the calling application's registry id. Two different
+     applications receive different `app_user_id` values for
+     the same person, and neither can derive the other's
+     `app_user_id` from its own.
+  3. **Field shaping per application.** Each application
+     declares the set of user fields it is approved to receive
+     in its application registration (`allowed_user_fields`).
+     Keys returns only the intersection of (the requested
+     fields) and (the application's allow-list). A field that
+     is in the database but not in the allow-list is never
+     returned, even if requested.
+  4. **`chosen_name` as the default display field.** For
+     the MVP's first slice, the only human-readable field any
+     application can request is the user's *chosen name*. The
+     `primary_email` and `display_name` columns exist for
+     internal use but are not part of the application-facing
+     response by default. Adding `primary_email` or other
+     fields to an application's allow-list is a separate
+     privileged change that requires a second SysAdmin
+     approval.
+  5. **Search endpoint contract.** `GET /v1/users` (or the
+     equivalent) accepts a query string, a field selector, and
+     a limit, and returns an array of `{ app_user_id,
+     chosen_name }` rows. The response is paginated and
+     bounded. The endpoint requires a registered application
+     with the `users.read` capability; the `chosen_name`
+     field and the `app_user_id` field are returned only when
+     the application has them in its allow-list.
+
+  Out of scope for this decision (and for any implementation
+  that follows it):
+
+  - The actual `users` table CRUD endpoints (those are
+    part of the universal application registry and the HR
+    provisioning queue, both already noted as later phases).
+  - Cross-organization user resolution.
+  - Username, handle, or alias uniqueness guarantees across
+    applications.
+  - Real-time presence or activity signals.
+
+- **Acceptance Criteria:**
+  - [ ] `docs/decisions/ADR-015-per-app-identity-mapping.md`
+        exists and answers the five questions above.
+  - [ ] The ADR names the data class (`app_user_id` mapping
+        rows) and records the privacy basis, retention, and
+        rotation rules.
+  - [ ] The ADR is cross-linked from
+        `docs/architecture/identity-model.md`,
+        `docs/architecture/application-registry.md`, and
+        `docs/security/auditing.md`.
+  - [ ] An implementation-tracking issue (or issues) is filed
+        in the same milestone and references the ADR; the
+        implementation issue is `adr-required` and points back
+        at the ADR.
+  - [ ] `docs/decisions/backlog/mvp.md` "Issue index" updated
+        to add the implementation issue and the new doc edits.
+- **Technical Notes:**
+  - The per-app mapping is the simplest possible: a
+    `(application_id, user_uuid, app_user_id)` row. The
+    `app_user_id` is generated by Keys at first resolution
+    and never re-issued unless the application is
+    re-provisioned under a new ADR.
+  - Search results are not cached in KV without a documented
+    bounded-revocation design (AGENTS.md safety rule).
+  - The search endpoint is a Worker route; the mapping table
+    is in D1; no KV writes.
+  - The endpoint is `501` in production until M4.7 (issue #28)
+    replaces the dev credential verifier with the production
+    JWKS verifier.
+  - Do not invent field names. The ADR must name the field
+    the application receives (currently: `chosen_name`).
+- **Dependencies:**
+    [M4.7 #28](https://github.com/pullPluto/Keys/issues/28) (the
+    production credential verifier must exist before any
+    non-501 endpoint ships), and
+    [M4.2 #23](https://github.com/pullPluto/Keys/issues/23) (the
+    retention period for the mapping rows is part of M4.2's
+    scope).
+
 ## Cross-phase quality bar
 
 - Every PR that lands an MVP issue must keep
@@ -844,9 +949,9 @@ the ADR does not close the gate.
 4. M3: M3.1, M3.2, M3.3, M3.4, M3.5, M3.6, M3.7 (audit sink,
    wire audit, harness, route tests, cross-route test, audit
    test, leakage review).
-5. M4: M4.1, M4.2, M4.3, M4.4, M4.5, M4.6, M4.7, M4.8 (backup
+5. M4: M4.1, M4.2, M4.3, M4.4, M4.5, M4.6, M4.7, M4.8, M4.9 (backup
    break-glass admin, retention, threat model, prod verifier,
-   README update).
+   README update, per-app identity mapping decision).
 
 Each phase is a release boundary. Don't promote a phase to "done"
 without its exit criteria passing in CI.
@@ -885,5 +990,6 @@ Each `[Mx.y]` issue below is also filed as a GitHub issue on
 | M4.6 | [#27](https://github.com/pullPluto/Keys/issues/27) | Incident response runbook |
 | M4.7 | [#28](https://github.com/pullPluto/Keys/issues/28) | Reject `dev`/`staging` verifiers when `ENVIRONMENT=production` |
 | M4.8 | [#29](https://github.com/pullPluto/Keys/issues/29) | Update README "Status and delivery gates" section |
+| M4.9 | [#31](https://github.com/pullPluto/Keys/issues/31) | Per-app identity mapping for cross-tool user references |
 
-Total: 27 issues. Largest is 5 story points; median is 3.
+Total: 28 issues. Largest is 5 story points; median is 3.
