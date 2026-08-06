@@ -1,11 +1,16 @@
 // packages/authentication/src/index.ts
 //
-// Authentication contracts and the dev HMAC verifier. The
-// CredentialVerifier interface is the public surface; the
-// DevHmacVerifier is the MVP implementation, refused in
-// production by the env gate in the route layer.
+// Authentication contracts and the verifiers used in dev and
+// production. The CredentialVerifier interface is the public
+// surface. The dev HMAC verifier drives the MVP; the JWKS
+// verifier (jwks.ts) is the M4.7 production verifier, gated on
+// `ENVIRONMENT === "production"`.
 
 import type { Identity, OrganizationId, IdentityId } from "../../identity/src";
+
+import { JwksVerifier } from "./jwks";
+export { JwksVerifier };
+export type { JwksVerifierOptions, Jwks, JwksKey } from "./jwks";
 
 export interface VerifiedCredential {
   issuer: string;
@@ -217,6 +222,38 @@ export function buildDevVerifier(env: {
     audience: "keys-pluto",
     refuse,
   });
+}
+
+/** Shape of the env fields the production verifier needs. The
+ *  Worker env type extends this. */
+export interface ProductionEnv {
+  ENVIRONMENT: string;
+  JWKS_URL?: string;
+  PROD_ISSUER?: string;
+  PROD_AUDIENCE?: string;
+}
+
+/** Build the credential verifier appropriate for the environment.
+ *  In dev/staging this returns the dev HMAC verifier; in
+ *  production it returns the JWKS verifier. The factory fails
+ *  closed in production if any of the three required fields
+ *  (JWKS_URL, PROD_ISSUER, PROD_AUDIENCE) are missing. */
+export function buildVerifier(env: ProductionEnv): CredentialVerifier {
+  if (env.ENVIRONMENT === "production") {
+    if (!env.JWKS_URL || !env.PROD_ISSUER || !env.PROD_AUDIENCE) {
+      throw new CredentialError(
+        "jwks_not_configured",
+        500,
+        "production verifier is not configured (set JWKS_URL, PROD_ISSUER, PROD_AUDIENCE)",
+      );
+    }
+    return new JwksVerifier({
+      jwksUrl: env.JWKS_URL,
+      issuer: env.PROD_ISSUER,
+      audience: env.PROD_AUDIENCE,
+    });
+  }
+  return buildDevVerifier(env);
 }
 
 /** Lookup a known identity from a verified subject. The MVP accepts

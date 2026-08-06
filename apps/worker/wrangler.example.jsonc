@@ -23,5 +23,6 @@
     "MVP_BOOTSTRAP_ADMINS": "[\"bootstrap-admin\"]",
     "MVP_HMAC_SECRET": "dev-only-do-not-use-in-production",
     "AUTHORIZATION_CACHE": "false"
-  }
+  },
+  "// prod_credentials": "M4.7 / ADR-014: required only when ENVIRONMENT=production. Set via `wrangler secret put` (not vars) for each: JWKS_URL, PROD_ISSUER, PROD_AUDIENCE."
 }

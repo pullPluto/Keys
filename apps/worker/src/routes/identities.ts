@@ -13,7 +13,7 @@ import {
   SchemaError,
 } from "../http/envelope";
 import { DEV_AUTH_HEADER, DEV_BEARER_PREFIX } from "../../../../packages/authentication/src";
-import { buildDevVerifier, resolvePrincipal } from "../../../../packages/authentication/src";
+import { buildVerifier, resolvePrincipal } from "../../../../packages/authentication/src";
 import { D1IdentityRepository, D1OrganizationRepository } from "../../../../packages/identity/src/d1";
 import {
   asOrganizationId,
@@ -44,7 +44,7 @@ export async function handlePostIdentity(
     );
   }
   const token = authHeader.slice(DEV_BEARER_PREFIX.length).trim();
-  const verifier = buildDevVerifier(env);
+  const verifier = buildVerifier(env);
   let credential;
   try {
     credential = await verifier.verify(token);
@@ -164,7 +164,7 @@ export async function handlePostAuthVerify(
     );
   }
   const token = authHeader.slice(DEV_BEARER_PREFIX.length).trim();
-  const verifier = buildDevVerifier(env);
+  const verifier = buildVerifier(env);
   try {
     const credential = await verifier.verify(token);
     return jsonResponse(
