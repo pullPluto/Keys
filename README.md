@@ -14,6 +14,7 @@ docs/architecture/           Boundaries, trust model, and flows
 docs/security/               Security requirements and non-goals
 docs/operations/             Deployment, recovery, and observability runbooks
 docs/decisions/              Architecture decision records
+docs/integrations/           Contracts for external clients, including Mission Control
 infrastructure/cloudflare/   Binding template and resource inventory
 infrastructure/scripts/      Explicit, operator-run provisioning commands
 tests/                       Repository-level checks
