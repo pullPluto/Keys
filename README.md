@@ -24,9 +24,24 @@ tests/                       Repository-level checks
 
 - `GET /healthz` returns a non-sensitive service status.
 - The Worker binds D1, KV, and R2 under the `keys-pluto` resource name.
-- The initial D1 migration creates tenant, identity, client, policy, and append-only audit foundations.
+- The initial D1 migration creates tenant, identity, client, policy, and append-only audit foundations; the second migration adds users, roles, applications, access profiles, role assignments, and the provisioning queue.
 - Domain modules define interfaces only; network protocols and external providers remain behind adapters.
 - A planned universal application registry, HR-mediated provisioning queue, and SysAdmin approval boundary are recorded but not exposed as public routes.
+
+## MVP definition
+
+The first deliverable is the **MVP** described in
+[`docs/decisions/backlog/mvp.md`](docs/decisions/backlog/mvp.md). It
+turns the scaffold into a real, exercised tenant + identity + policy +
+authorize + audit loop on D1, with dev/staging-only credentials. The
+MVP is sequenced across 5 phases (M0–M4) with explicit entry and
+exit criteria; the production gates from `AGENTS.md` are tracked as
+Phase 4 decision issues that close only when the corresponding ADR
+is merged.
+
+OIDC issuance, the application registry, HR-driven provisioning, the
+AI/agent/MCP gateways, and SysKey activation flows are **out of
+scope** for the MVP and land in later phases.
 
 ## Local development
 
@@ -51,8 +66,20 @@ Copy `apps/worker/wrangler.example.jsonc` to `apps/worker/wrangler.jsonc`, then 
 
 ## Documentation
 
-Start with the [replacement program](docs/product/replacement-program.md), then read [architecture overview](docs/architecture/overview.md), [application registry](docs/architecture/application-registry.md), [provisioning](docs/architecture/provisioning.md), [SysKey boundary](docs/architecture/syskey-fallback.md), and [security requirements](docs/security/authentication.md). Material choices are recorded in [ADRs](docs/decisions/).
+Start with the [replacement program](docs/product/replacement-program.md)
+and the [MVP backlog](docs/decisions/backlog/mvp.md), then read
+[architecture overview](docs/architecture/overview.md),
+[identity model](docs/architecture/identity-model.md),
+[authorization](docs/architecture/authorization.md),
+[application registry](docs/architecture/application-registry.md),
+[provisioning](docs/architecture/provisioning.md),
+[SysKey boundary](docs/architecture/syskey-fallback.md),
+[Mission Control integration](docs/integrations/mission-control.md),
+and [security requirements](docs/security/authentication.md). Material
+choices are recorded in [ADRs](docs/decisions/).
 
 ## Status and delivery gates
 
 The user has designated themselves as initial accountable owner and Cloudflare owner manager. Before the first production deployment, they must still name a break-glass backup administrator and approve the threat model, data classification, retention periods, incident response, provider contracts, recovery exercise, and deployment environment. These are intentionally marked as unresolved where evidence is not yet present.
+
+Each gate is tracked as a Phase 4 issue in the [MVP backlog](docs/decisions/backlog/mvp.md). Closing a gate requires both the issue and its corresponding ADR to be merged; the MVP does not claim a gate is closed until evidence is on disk.
