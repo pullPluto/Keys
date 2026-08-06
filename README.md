@@ -54,6 +54,18 @@ npm test
 npm run dev
 ```
 
+Apply the local D1 migrations (dev/staging only):
+
+```sh
+KEYS_PLUTO_DB_ID=<your-d1-id-from-provision-cloudflare> \
+  infrastructure/scripts/apply-migrations.sh
+```
+
+The script defaults to `--local`. Set `REMOTE=true` to target the
+remote D1, which prints a confirmation prompt before continuing. The
+script never creates the D1 database — run
+`infrastructure/scripts/provision-cloudflare.sh` first.
+
 Copy `apps/worker/wrangler.example.jsonc` to `apps/worker/wrangler.jsonc`, then replace only the deliberately invalid binding identifiers. Do not commit the copied file, account IDs, tokens, or secrets. See [Cloudflare infrastructure](infrastructure/cloudflare/README.md).
 
 ## Important boundaries
