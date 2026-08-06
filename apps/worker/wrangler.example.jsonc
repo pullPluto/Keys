@@ -18,5 +18,10 @@
     "bucket_name": "keys-pluto"
   }],
   "send_email": [{ "name": "EMAIL" }],
-  "vars": { "ENVIRONMENT": "development" }
+  "vars": {
+    "ENVIRONMENT": "development",
+    "MVP_BOOTSTRAP_ADMINS": "[\"bootstrap-admin\"]",
+    "MVP_HMAC_SECRET": "dev-only-do-not-use-in-production",
+    "AUTHORIZATION_CACHE": "false"
+  }
 }

@@ -7,3 +7,4 @@ apps/worker/.dev.vars
 .env
 .env.*
 !.env.example
+tests/.DS_Store

@@ -8,6 +8,6 @@
     "lib": ["ES2022", "WebWorker"],
     "skipLibCheck": true
   },
-  "include": ["apps/**/*.ts", "packages/**/*.ts"],
-  "exclude": ["tests"]
+  "include": ["apps/**/*.ts", "packages/**/*.ts", "tests/**/*.ts"],
+  "exclude": []
 }
