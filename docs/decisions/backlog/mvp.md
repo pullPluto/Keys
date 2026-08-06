@@ -856,15 +856,25 @@ the ADR does not close the gate.
      fields) and (the application's allow-list). A field that
      is in the database but not in the allow-list is never
      returned, even if requested.
-  4. **`chosen_name` as the default display field.** For
-     the MVP's first slice, the only human-readable field any
-     application can request is the user's *chosen name*. The
-     `primary_email` and `display_name` columns exist for
-     internal use but are not part of the application-facing
-     response by default. Adding `primary_email` or other
-     fields to an application's allow-list is a separate
-     privileged change that requires a second SysAdmin
-     approval.
+  4. **`chosen_name` as the default display field, sourced
+     from HR.** `chosen_name` is **not** a self-serve Keys
+     field — it is delivered by the HR system (the
+     PullPluto HR adapter is a separate Phase 4 work item;
+     see [`docs/architecture/provisioning.md`](../architecture/provisioning.md)
+     and replacement-program milestone 3). The first and
+     last name format is canonical and shared across every
+     company system. The `users` table today has no
+     `chosen_name` column; the ADR (or its companion
+     schema issue) must add one, populate it from HR, and
+     forbid any code path that writes `chosen_name` except
+     the HR adapter. For the MVP's first slice, the only
+     human-readable field any application can request is
+     the user's chosen name. The `primary_email` and
+     `display_name` columns exist for internal use but are
+     not part of the application-facing response by
+     default. Adding `primary_email` or other fields to an
+     application's allow-list is a separate privileged
+     change that requires a second SysAdmin approval.
   5. **Search endpoint contract.** `GET /v1/users` (or the
      equivalent) accepts a query string, a field selector, and
      a limit, and returns an array of `{ app_user_id,
@@ -873,6 +883,17 @@ the ADR does not close the gate.
      with the `users.read` capability; the `chosen_name`
      field and the `app_user_id` field are returned only when
      the application has them in its allow-list.
+  6. **Storage shape and search semantics for
+     `chosen_name`.** The default recommendation is to
+     store `chosen_name` as a single string in D1 (the
+     way HR delivers it) and derive any first/last
+     split at query time inside Keys, never persisting a
+     split. Search matches on the full string, case- and
+     diacritics-insensitive, with prefix matching by
+     default. The ADR must justify any deviation
+     (for example, an additional `chosen_name_normalized`
+     column for indexed search) and must confirm that
+     no path exposes a partial name.
 
   Out of scope for this decision (and for any implementation
   that follows it):

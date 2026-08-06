@@ -12,6 +12,12 @@ When that ADR lands, Keys will issue a stable internal `user_uuid`
 per user and a **per-application opaque handle** (`app_user_id`)
 that one PullPluto tool can hand to another without exposing the
 internal UUID or letting the second tool reconstruct the first
-tool's handle. The MVP does not implement this layer; the `users`
-table today carries only the columns above plus the internal row
-id used by the D1 schema.
+tool's handle. The `chosen_name` that the layer exposes is **not**
+a self-serve Keys field — it is delivered by the HR system (the
+PullPluto HR adapter is a separate Phase 4 work item; see
+[`docs/architecture/provisioning.md`](provisioning.md) and
+replacement-program milestone 3) and is shared across every company
+system. The `users` table today carries only the columns above plus
+the internal row id used by the D1 schema; the `chosen_name`
+column is part of the M4.9 implementation, not part of the MVP
+schema.
