@@ -21,6 +21,14 @@ export interface Env {
   /** When "true", the authorize route may cache decisions in KV
    *  with a 5 s TTL. The default is off. */
   AUTHORIZATION_CACHE?: "true" | "false";
+  /** M4.7 / ADR-014: URL of the upstream IdP's JWKS document.
+   *  Required when ENVIRONMENT === "production"; the buildVerifier
+   *  factory fails closed otherwise. */
+  JWKS_URL?: string;
+  /** M4.7 / ADR-014: expected `iss` claim in production tokens. */
+  PROD_ISSUER?: string;
+  /** M4.7 / ADR-014: expected `aud` claim in production tokens. */
+  PROD_AUDIENCE?: string;
 }
 
 export interface D1PreparedStatement {

@@ -1199,7 +1199,7 @@ Each `[Mx.y]` issue below is also filed as a GitHub issue on
 | M4.4 | [#25](https://github.com/pullPluto/Keys/issues/25) | Adversary and attack surface list |
 | M4.5 | [#26](https://github.com/pullPluto/Keys/issues/26) | Mitigation mapping for each threat |
 | M4.6 | [#27](https://github.com/pullPluto/Keys/issues/27) | Incident response runbook |
-| M4.7 | [#28](https://github.com/pullPluto/Keys/issues/28) | Reject `dev`/`staging` verifiers when `ENVIRONMENT=production` |
+| M4.7 | [#28](https://github.com/pullPluto/Keys/issues/28) | Reject `dev`/`staging` verifiers when `ENVIRONMENT=production` (JWKS verifier delivered; see ADR-014) |
 | M4.8 | [#29](https://github.com/pullPluto/Keys/issues/29) | Update README "Status and delivery gates" section |
 | M4.9 | [#31](https://github.com/pullPluto/Keys/issues/31) | Per-app identity mapping for cross-tool user references |
 | M4.10 | [#34](https://github.com/pullPluto/Keys/issues/34) | Add `chosen_name` column to `users` and forbid non-HR writes |

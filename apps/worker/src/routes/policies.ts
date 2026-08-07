@@ -18,7 +18,7 @@ import {
 import {
   DEV_AUTH_HEADER,
   DEV_BEARER_PREFIX,
-  buildDevVerifier,
+  buildVerifier,
 } from "../../../../packages/authentication/src";
 import {
   PolicyDocument,
@@ -56,7 +56,7 @@ async function requireBootstrapAdmin(
     };
   }
   const token = authHeader.slice(DEV_BEARER_PREFIX.length).trim();
-  const verifier = buildDevVerifier(env);
+  const verifier = buildVerifier(env);
   let credential;
   try {
     credential = await verifier.verify(token);

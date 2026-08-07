@@ -16,7 +16,7 @@ import {
 import {
   DEV_AUTH_HEADER,
   DEV_BEARER_PREFIX,
-  buildDevVerifier,
+  buildVerifier,
 } from "../../../../packages/authentication/src";
 import { D1IdentityRepository } from "../../../../packages/identity/src/d1";
 import { asIdentityId, asOrganizationId, defaultIdGenerator } from "../../../../packages/identity/src";
@@ -50,7 +50,7 @@ export async function handlePostAuthorize(
     return errorResponse(401, "missing_credential", "Authorization: Bearer <token> is required", correlationId);
   }
   const token = authHeader.slice(DEV_BEARER_PREFIX.length).trim();
-  const verifier = buildDevVerifier(env);
+  const verifier = buildVerifier(env);
   let credential;
   try {
     credential = await verifier.verify(token);
